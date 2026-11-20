@@ -26,7 +26,7 @@ function studioTexture(THREE) {
   return texture;
 }
 
-export function createScene(THREE, container, { context, lite }, flavor, onLost) {
+export function createScene(THREE, container, { context, lite }, flavor, onLost, prints) {
   const canvas = context.canvas;
   if (context.isContextLost()) return;
 
@@ -90,6 +90,7 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost)
   let scroll = 0;
   let pointerX = 0;
   let pointerY = 0;
+  let view;
   let current;
   let fruits;
   let sizeReady = false;
@@ -106,7 +107,7 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost)
     rimColor.set(composition.accent);
     dustSurface.color.set(composition.accent);
     dustGeometry.setDrawRange(0, lite || compact ? Math.min(composition.points, 16) : composition.points);
-    can.setFlavor(next);
+    can.setPrint(prints[next.id]);
     fruitRoot.clear();
     if (!fruitCache.has(next.id)) fruitCache.set(next.id, createFruitSet(THREE, next.id, lite || compact));
     fruits = fruitCache.get(next.id).pieces;
@@ -133,7 +134,8 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost)
     fruitRoot.rotation.y = cameraTarget.swing * 0.63;
     fruits.forEach((piece, i) => {
       const [x, y, z] = fruitLayouts[current.id][i];
-      piece.position.set(x + pointerX * (0.12 + i * 0.13), y + Math.sin(time * (0.9 + i * 0.27) + i) * 0.18, z);
+      const drift = Math.sin(time * (0.53 + i * 0.12) + i) * (current.id === 'mango' ? 0.17 : 0.07);
+      piece.position.set(x + drift + pointerX * (0.12 + i * 0.13), y + Math.sin(time * (0.9 + i * 0.27) + i) * 0.18, z);
       const showCut = (i === 1 && current.id !== 'mango') || (i === 2 && current.id === 'lime');
       piece.rotation.set((showCut ? -1.28 : 0.58) + time * (0.18 + i * 0.12), time * -0.3 + i, i * 0.54);
       piece.scale.setScalar(1 - i * 0.11);
@@ -143,8 +145,19 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost)
     camera.updateProjectionMatrix();
     const scrollMotion = reduced ? 0 : scroll;
     camera.position.set(motion.x + cameraTarget.yaw + pointerX * 0.37,
-      motion.y + pointerY * 0.25 + scrollMotion * 0.23, motion.distance + cameraTarget.travel + scrollMotion * 1.04);
+      motion.y + pointerY * 0.25 + scrollMotion * 0.23, Math.max(motion.distance, 6.65 / camera.aspect) + cameraTarget.travel + scrollMotion * 1.04);
     camera.lookAt(0, -0.16 * scrollMotion, 0);
+    if (view) {
+      camera.position.set(0, 0, 8.6);
+      camera.lookAt(0, 0, 0);
+      can.group.position.set(0, 0, 0);
+      const angles = { front: [0, 0], side: [0, Math.PI/2], back: [0, Math.PI], top: [Math.PI/2, 0] };
+      const [x, y] = angles[view];
+      can.group.rotation.set(x, Math.PI + y, 0, 'XYZ');
+    }
+    can.group.scale.set(0.88, 1, 0.88);
+    fruitRoot.visible = !view;
+    dust.visible = !view && !reduced;
     renderer.render(scene, camera);
   }
 
@@ -218,15 +231,17 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost)
       if (value) { orbit.reset(); pointerX = pointerY = 0; }
       sync();
     },
-    beginDrag() { if (!transitioning) orbit.begin(); },
+    inspect(angle) { view = angle; sync(); },
+    beginDrag() { view = null; if (!transitioning) orbit.begin(); },
     endDrag() { orbit.end(); interactiveAt = elapsed; },
     orbit(x, y = 0, dt = 16) {
       if (transitioning) return;
+      view = null;
       orbit.move(x, y, dt);
       interactiveAt = elapsed;
       if (reduced) sync();
     },
-    reset() { orbit.reset(); interactiveAt = elapsed; sync(); },
+    reset() { view = null; orbit.reset(); interactiveAt = elapsed; sync(); },
     dispose() {
       canvas.removeEventListener('webglcontextlost', lose);
       document.removeEventListener('visibilitychange', sync);

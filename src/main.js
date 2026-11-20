@@ -2,6 +2,7 @@ import '@fontsource/barlow-condensed/latin-800.css';
 import '@fontsource-variable/space-grotesk';
 import './style.css';
 import './cinematic.css';
+import './director.css';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { flavors, nextIndex } from './flavors.js';
@@ -89,6 +90,11 @@ const cards = flavors.map((flavor, index) => {
 function render(index, announce = false) {
   const flavor = flavors[index];
   flavorFlow.commit(index);
+  const detail = document.querySelector('.exploration-visual img');
+  detail.src = flavor.image;
+  detail.alt = flavor.alt;
+  detail.parentElement.style.setProperty("--print-light", flavor.accent);
+  detail.parentElement.style.setProperty("--print-shadow", flavor.glow);
   hero.dataset.flavor = flavor.id;
   hero.style.setProperty('--accent', flavor.accent);
   hero.style.setProperty('--glow', flavor.glow);
@@ -164,16 +170,16 @@ async function select(index) {
     .to(words, { yPercent: -106, stagger: 0.025, duration: 0.25 }, 0)
     .to(heroMeta, { opacity: 0, y: -12, duration: 0.23 }, 0)
     .to(outgoing, {
-      opacity: 0, scale: 0.86, rotation: -leaving.turn, rotationY: -leaving.yaw * 0.7,
+      opacity: 0.87, scale: 0.94, rotation: -leaving.turn, rotationY: -leaving.yaw * 0.7,
       x: -leaving.x * amplitude, y: -leaving.y * amplitude, z: leaving.depth, duration: 0.33,
     }, 0)
-    .to(atmosphere, { opacity: 0, duration: 0.32 }, 0)
+    .to(atmosphere, { opacity: 0.78, duration: 0.32 }, 0)
     .call(() => { hero.dataset.transition = 'arriving'; swap(); }, [], 0.33)
     .to(atmosphere, { opacity: 1, duration: 0.46, clearProps: 'opacity' }, 0.33)
     .fromTo(posterPlanes, { x: (i) => entering.x * (i + 1) * -0.23, y: entering.y * 0.36, scale: 1.08 }, {
       x: 0, y: 0, scale: 1, duration: 0.72, stagger: 0.035, clearProps: 'transform', immediateRender: false,
     }, 0.33)
-    .fromTo(artwork, { opacity: 0 }, { opacity: 1, duration: 0.42, clearProps: 'opacity', immediateRender: false }, 0.33)
+    .fromTo(artwork, { opacity: 0.88 }, { opacity: 1, duration: 0.42, clearProps: 'opacity', immediateRender: false }, 0.33)
     .fromTo(lightBeam, { xPercent: -24, scale: 0.88, opacity: 0.08 }, {
       xPercent: 9, scale: 1.14, opacity: 0.72, duration: 0.53, ease: 'power2.out', immediateRender: false,
     }, 0.19)
@@ -201,7 +207,7 @@ async function select(index) {
   if (scene) {
     transition
       .to(scene.cameraTarget, { travel: 1.05, yaw: -leaving.yaw * 0.021, swing: -leaving.turn * 0.045, duration: 0.34 }, 0)
-      .to(modelView, { opacity: 0, duration: 0.31 }, 0)
+      .to(modelView, { opacity: 0.90, duration: 0.31 }, 0)
       .to(modelView, { opacity: 1, duration: 0.36, clearProps: 'opacity' }, 0.34)
       .set(scene.cameraTarget, { swing: entering.yaw * 0.018 }, 0.34)
       .to(scene.cameraTarget, { travel: -0.16, yaw: 0.13, swing: 0, duration: 0.51, ease: 'power3.out' }, 0.34)
@@ -354,7 +360,7 @@ async function openModel() {
       closeModel('WebGL indisponível. A perspectiva cinematográfica continua ativa.');
       return;
     }
-    const [{ createScene }, THREE] = await Promise.all([import('./scene.js'), loadRenderer(renderer.lite), document.fonts.ready]);
+    const [{ createScene }, THREE, prints] = await Promise.all([import('./scene.js'), loadRenderer(renderer.lite), loadPrints()]);
     if (request !== sceneRequest) {
       renderer.context.getExtension('WEBGL_lose_context')?.loseContext();
       return;
@@ -363,13 +369,14 @@ async function openModel() {
     modelView.hidden = false;
     scene = createScene(THREE, modelView, renderer, flavors[flavorFlow.selected], () => {
       closeModel('A sessão WebGL foi interrompida. A perspectiva cinematográfica foi restaurada.');
-    });
+    }, prints);
     if (!scene) {
       closeModel('A visualização 3D está indisponível neste dispositivo.');
       return;
     }
     scene.setReduced(reducedMotion.matches);
     scene.setScroll(pageMotion.scroll);
+    document.querySelector('#inspection-view').value = '';
     modelTools.hidden = false;
     modelMode.textContent = scene.mode;
     frame.classList.add('show-model');
@@ -393,6 +400,7 @@ let dragStart;
 modelView.addEventListener('pointerdown', (event) => {
   if (event.button !== 0 || !event.isPrimary || hero.dataset.transition) return;
   dragStart = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+  document.querySelector('#inspection-view').value = '';
   scene?.beginDrag();
   modelView.setPointerCapture(event.pointerId);
 });
@@ -402,7 +410,7 @@ modelView.addEventListener('pointermove', (event) => {
   dragStart = { x: event.clientX, y: event.clientY, time: event.timeStamp };
 });
 modelView.addEventListener('lostpointercapture', () => { dragStart = undefined; scene?.endDrag(); });
-document.querySelector('.reset-model').addEventListener('click', () => scene?.reset());
+document.querySelector('.reset-model').addEventListener('click', () => { scene?.reset(); document.querySelector('#inspection-view').value = ''; });
 document.querySelector('.explore-launch').addEventListener('click', () => {
   hero.scrollIntoView();
   if (scene) modelView.focus({ preventScroll: true });
@@ -413,11 +421,13 @@ modelView.addEventListener('keydown', (event) => {
   const directions = { ArrowLeft: [-0.35, 0], ArrowRight: [0.35, 0], ArrowUp: [0, -0.24], ArrowDown: [0, 0.24] };
   if (Object.hasOwn(directions, event.key)) {
     event.preventDefault();
+    document.querySelector('#inspection-view').value = '';
     scene?.orbit(...directions[event.key]);
   }
   if (event.key === 'Home') {
     event.preventDefault();
     scene?.reset();
+    document.querySelector('#inspection-view').value = '';
   }
 });
 
@@ -443,3 +453,75 @@ function syncEffects() {
 reducedMotion.addEventListener('change', syncEffects);
 desktopPointer.addEventListener('change', syncEffects);
 syncEffects();
+
+async function loadPrints() {
+  const { loadPrint } = await import('./3d/labels.js');
+  return Object.fromEntries(await Promise.all(flavors.map(async ({id}) => [id, await loadPrint(id)])));
+}
+
+document.querySelector('#inspection-view').addEventListener('change', event => {
+  scene?.inspect(event.target.value);
+});
+
+const studio = document.querySelector('.studio');
+const floor = studio.querySelector('.studio-floor');
+const studioChoices = studio.querySelector('.studio-choices');
+let studioSession = 0;
+let stage3D;
+let shot;
+let choosing = false;
+for (const [index, flavor] of flavors.entries()) {
+  const image = document.createElement('img');
+  image.alt = '';
+  image.loading = 'lazy';
+  image.src = flavor.image;
+  floor.append(image);
+  const button = document.createElement('button');
+  button.textContent = flavor.name;
+  button.style.setProperty('--swatch', flavor.accent);
+  studioChoices.append(button);
+  button.addEventListener('click', () => {
+    if (choosing) return;
+    choosing = true;
+    const finish = () => {
+      studio.close();
+      choices[index].focus({preventScroll:true});
+      hero.scrollIntoView();
+      select(index);
+    };
+    if (reducedMotion.matches) return finish();
+    shot?.kill();
+    shot = stage3D
+      ? gsap.to(stage3D.shot, {x:(index-1.5)*1.75, zoom:1.55, duration:.74, ease:'power2.inOut', onUpdate:stage3D.draw, onComplete:finish})
+      : gsap.to(image, {scale:1.24, rotationY:9, duration:.48, onComplete:finish});
+  });
+}
+document.querySelector('.open-studio').addEventListener('click', async () => {
+  const session = ++studioSession;
+  choosing = false;
+  studio.showModal();
+  const config = requestRenderer();
+  if (!config) return;
+  try {
+    const [THREE, {createStudio}, prints] = await Promise.all([loadRenderer(config.lite), import('./3d/studio.js'), loadPrints()]);
+    if (!studio.open || session !== studioSession || choosing) {
+      config.context.getExtension('WEBGL_lose_context')?.loseContext();
+      return;
+    }
+    stage3D = createStudio(THREE, config, floor, flavors, prints);
+    floor.classList.add('rendered');
+    config.context.canvas.addEventListener('webglcontextlost', () => floor.classList.remove('rendered'), {once:true});
+    if (!reducedMotion.matches) shot = gsap.from(stage3D.shot, {x:-.28, zoom:.92, duration:1.1, ease:'power3.out', onUpdate:stage3D.draw});
+  } catch {
+    config.context.getExtension('WEBGL_lose_context')?.loseContext();
+  }
+});
+studio.querySelector('.skip-studio').addEventListener('click', () => studio.close());
+studio.addEventListener('close', () => {
+  studioSession++;
+  shot?.kill();
+  stage3D?.dispose();
+  stage3D = undefined;
+  floor.classList.remove('rendered');
+  gsap.set(floor.querySelectorAll('img'), {clearProps:'transform'});
+});
