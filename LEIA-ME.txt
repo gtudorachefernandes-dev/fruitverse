@@ -1,0 +1,10 @@
+FRUITVERSE 4.0 — prévia de revisão
+Build do commit 6e64d33
+
+Extraia o ZIP e abra FRUITVERSE-4.0.html no Chrome.
+Clique em Explorar em 3D. O navegador seleciona WebGL 2, WebGL 1 ou a experiência em CSS.
+A prévia é autocontida e não exige Node.js nem servidor HTTP.
+O WebGL depende do navegador, do driver gráfico e das configurações do computador.
+
+GSAP: https://gsap.com/standard-license/
+As licenças do Three.js e das fontes acompanham este pacote.
