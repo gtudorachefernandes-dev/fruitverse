@@ -12,6 +12,11 @@ const hero = document.querySelector('.hero');
 const picker = document.querySelector('#flavor-picker');
 const product = document.querySelector('.product');
 const frame = document.querySelector('.product-frame');
+const modelView = document.querySelector('#model-view');
+const modelToggle = document.querySelector('.view-toggle');
+const modelStatus = document.querySelector('#model-announcement');
+const orbits = [...document.querySelectorAll('.orbit')];
+const pageMotion = { scroll: 0 };
 const description = document.querySelector('#flavor-description');
 const words = [...document.querySelectorAll('.title-line > span')];
 const loader = document.querySelector('.loader');
@@ -26,7 +31,8 @@ let requestId = 0;
 let transition;
 let intro;
 let scene;
-let scenePending = false;
+let sceneRequest = 0;
+let modelLoading = false;
 
 const number = (index) => String(index + 1).padStart(2, '0');
 
@@ -72,6 +78,7 @@ const cards = flavors.map((flavor, index) => {
 function render(index, announce = false) {
   const flavor = flavors[index];
   selected = index;
+  hero.dataset.flavor = flavor.id;
   hero.style.setProperty('--accent', flavor.accent);
   hero.style.setProperty('--glow', flavor.glow);
   hero.style.setProperty('--dark', flavor.dark);
@@ -80,7 +87,7 @@ function render(index, announce = false) {
   document.querySelector('#figure-index').textContent = number(index);
   description.textContent = flavor.description;
   choices.forEach((button, position) => button.setAttribute('aria-pressed', String(position === index)));
-  scene?.setColor(flavor.accent);
+  scene?.setFlavor(flavor);
   if (announce) document.querySelector('#flavor-announcement').textContent = flavor.name;
 }
 
@@ -102,6 +109,7 @@ function mountArtwork(artwork) {
 async function select(index) {
   requested = index;
   const id = ++requestId;
+  finishTransition();
   if (selected === index) return;
   const flavor = flavors[index];
   let artwork = createArtwork(flavor, useLayers());
@@ -123,23 +131,51 @@ async function select(index) {
 
   intro?.progress(1);
   finishTransition();
-  const previous = mountArtwork(artwork);
-  render(index, true);
+  const swap = () => {
+    mountArtwork(artwork).remove();
+    render(index, true);
+  };
   if (reducedMotion.matches) {
-    previous.remove();
+    swap();
     return;
   }
 
-  transition = gsap.timeline({ onComplete: () => previous.remove() });
+  const outgoing = activeArt;
+  const incomingCan = artwork.querySelector('.can');
+  transition = gsap.timeline({ defaults: { ease: 'power2.inOut' } });
   transition
-    .to(previous, { opacity: 0, duration: 0.46, ease: 'power2.inOut' }, 0)
-    .from(artwork, { opacity: 0, duration: 0.56, ease: 'power2.out', clearProps: 'opacity' }, 0)
-    .from(artwork.querySelector('.can'), { scale: 0.95, rotation: -5, y: 12, duration: 0.8, ease: 'power3.out', clearProps: 'transform' }, 0)
-    .from(words, { yPercent: 108, duration: 0.62, stagger: 0.07, ease: 'power4.out', clearProps: 'transform' }, 0)
-    .from(description, { opacity: 0, y: 8, duration: 0.42, clearProps: 'opacity,transform' }, 0.16);
-  const fruit = artwork.querySelectorAll('.fruit');
-  if (fruit.length) {
-    transition.from(fruit, { opacity: 0, scale: 0.82, stagger: 0.06, duration: 0.64, clearProps: 'opacity,scale' }, 0.09);
+    .to(words, { yPercent: -106, stagger: 0.025, duration: 0.25 }, 0)
+    .to(description, { opacity: 0, y: -6, duration: 0.23 }, 0)
+    .to(outgoing, { opacity: 0, scale: 0.94, rotation: 8, duration: 0.33 }, 0)
+    .to(orbits, { opacity: 0.04, duration: 0.28 }, 0)
+    .call(swap, [], 0.33)
+    .fromTo(artwork, { opacity: 0 }, { opacity: 1, duration: 0.42, clearProps: 'opacity', immediateRender: false }, 0.33)
+    .fromTo(incomingCan, { scale: 0.91, rotation: -9, y: 14 }, {
+      scale: 1, rotation: 0, y: 0, duration: 0.74, ease: 'power3.out', clearProps: 'transform', immediateRender: false,
+    }, 0.33)
+    .fromTo(words, { yPercent: 109 }, {
+      yPercent: 0, duration: 0.54, stagger: 0.06, ease: 'power4.out', clearProps: 'transform', immediateRender: false,
+    }, 0.36)
+    .to(description, { opacity: 1, y: 0, duration: 0.37, clearProps: 'opacity,transform' }, 0.44)
+    .to(orbits, { opacity: (index) => index ? 0.17 : 0.25, duration: 0.54, clearProps: 'opacity' }, 0.36);
+  const outgoingFruit = outgoing.querySelectorAll('.fruit');
+  const incomingFruit = artwork.querySelectorAll('.fruit');
+  if (outgoingFruit.length) {
+    transition.to(outgoingFruit, { x: (i) => i % 2 ? 24 : -20, y: -8, duration: 0.3 }, 0);
+  }
+  if (incomingFruit.length) {
+    transition.fromTo(incomingFruit, { x: (i) => i % 2 ? 18 : -16, y: 12, opacity: 0 }, {
+      x: 0, y: 0, opacity: 1, stagger: 0.045, duration: 0.58, clearProps: 'transform,opacity', immediateRender: false,
+    }, 0.37);
+  }
+  if (scene) {
+    transition
+      .to(scene.cameraTarget, { travel: 1.2, yaw: -0.79, swing: -0.55, duration: 0.34 }, 0)
+      .to(modelView, { opacity: 0, duration: 0.31 }, 0)
+      .to(modelView, { opacity: 1, duration: 0.36, clearProps: 'opacity' }, 0.34)
+      .set(scene.cameraTarget, { swing: 0.6 }, 0.34)
+      .to(scene.cameraTarget, { travel: -0.16, yaw: 0.13, swing: 0, duration: 0.51, ease: 'power3.out' }, 0.34)
+      .to(scene.cameraTarget, { travel: 0, yaw: 0, duration: 0.26, ease: 'sine.out' }, 0.85);
   }
 }
 
@@ -183,10 +219,12 @@ media.add('(prefers-reduced-motion: no-preference)', () => {
       scrollTrigger: { trigger: card, start: 'top 90%', once: true },
     });
   }
-  gsap.from('.manifesto > div', {
-    opacity: 0, y: 40, duration: 0.85, clearProps: 'opacity,transform',
-    scrollTrigger: { trigger: '.manifesto', start: 'top 86%', once: true },
-  });
+  gsap.timeline({ scrollTrigger: { trigger: '.manifesto', start: 'top 86%', once: true } })
+    .from('.manifesto-label', { opacity: 0, x: -14, duration: 0.4, clearProps: 'opacity,transform' })
+    .from('.manifesto h2', { opacity: 0, y: 28, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' }, 0.12)
+    .from('.manifesto div p, .manifesto a', {
+      opacity: 0, y: 16, duration: 0.48, stagger: 0.08, clearProps: 'opacity,transform',
+    }, 0.26);
 });
 
 media.add('(min-width: 761px) and (prefers-reduced-motion: no-preference)', () => {
@@ -194,10 +232,12 @@ media.add('(min-width: 761px) and (prefers-reduced-motion: no-preference)', () =
     yPercent: 13, scale: 0.91, ease: 'none',
     scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6 },
   });
-  gsap.to('.orbit-one', {
-    rotation: 38, scale: 1.14, ease: 'none',
-    scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.7 },
-  });
+  gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.7 } })
+    .to('.orbit-one', { rotation: 24, scale: 1.14, ease: 'none' }, 0)
+    .to('.orbit-two', { rotation: -18, y: -31, ease: 'none' }, 0)
+    .to('.cross-top', { y: -40, ease: 'none' }, 0)
+    .to('.cross-bottom', { y: 25, ease: 'none' }, 0)
+    .to(pageMotion, { scroll: 1, ease: 'none', onUpdate() { scene?.setScroll(pageMotion.scroll); } }, 0);
 });
 
 const navLinks = [...document.querySelectorAll('.masthead nav a')];
@@ -253,7 +293,79 @@ function resetPointer() {
   pointAt(0, 0);
 }
 
-async function syncEffects() {
+function closeModel(message = '') {
+  sceneRequest++;
+  modelLoading = false;
+  const restoreFocus = modelView.contains(document.activeElement);
+  scene?.dispose();
+  scene = undefined;
+  frame.classList.remove('show-model');
+  modelView.hidden = true;
+  modelToggle.disabled = false;
+  modelToggle.setAttribute('aria-pressed', 'false');
+  modelToggle.textContent = 'Explorar em 3D';
+  modelStatus.textContent = message;
+  if (restoreFocus) (modelToggle.hidden ? choices[selected] : modelToggle).focus({ preventScroll: true });
+}
+
+async function openModel() {
+  const request = ++sceneRequest;
+  modelLoading = true;
+  modelToggle.disabled = true;
+  modelStatus.textContent = 'Carregando a embalagem 3D.';
+  try {
+    const [{ createScene }] = await Promise.all([import('./scene.js'), document.fonts.ready]);
+    if (request !== sceneRequest || !useLayers()) return;
+    finishTransition();
+    modelView.hidden = false;
+    scene = createScene(modelView, flavors[selected], () => {
+      closeModel('A sessão WebGL foi interrompida. A arte original foi restaurada.');
+    });
+    if (!scene) {
+      closeModel('A visualização 3D está indisponível neste dispositivo.');
+      return;
+    }
+    scene.setScroll(pageMotion.scroll);
+    frame.classList.add('show-model');
+    modelToggle.setAttribute('aria-pressed', 'true');
+    modelToggle.textContent = 'Ver arte original';
+    modelStatus.textContent = 'Visualização 3D ativa. Arraste ou use as setas para girar.';
+    modelView.focus({ preventScroll: true });
+  } catch {
+    if (request === sceneRequest) closeModel('Não foi possível abrir o 3D. A arte original continua disponível.');
+  } finally {
+    if (request === sceneRequest) {
+      modelLoading = false;
+      modelToggle.disabled = false;
+    }
+  }
+}
+
+modelToggle.addEventListener('click', () => scene ? closeModel() : openModel());
+
+let dragStart;
+modelView.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) return;
+  dragStart = event.clientX;
+  modelView.setPointerCapture(event.pointerId);
+});
+modelView.addEventListener('pointermove', (event) => {
+  if (dragStart === undefined || !modelView.hasPointerCapture(event.pointerId)) return;
+  scene?.orbit((event.clientX - dragStart) * 0.014);
+  dragStart = event.clientX;
+});
+modelView.addEventListener('lostpointercapture', () => { dragStart = undefined; });
+modelView.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeModel();
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    scene?.orbit(event.key === 'ArrowLeft' ? -0.35 : 0.35);
+  }
+});
+
+function syncEffects() {
+  modelToggle.hidden = !useLayers();
+  if (!useLayers() && (scene || modelLoading)) closeModel();
   if (reducedMotion.matches) {
     intro?.progress(1);
     finishTransition();
@@ -263,22 +375,10 @@ async function syncEffects() {
     hero.removeEventListener('pointerleave', resetPointer);
     for (const setter of [tiltX, tiltY, shiftX, shiftY]) setter.tween.pause();
     gsap.set(product, { x: 0, y: 0, rotationX: 0, rotationY: 0 });
-    scene?.dispose();
-    scene = undefined;
     return;
   }
   hero.addEventListener('pointermove', move);
   hero.addEventListener('pointerleave', resetPointer);
-  if (scene || scenePending || lowPower) return;
-  scenePending = true;
-  try {
-    const { createScene } = await import('./scene.js');
-    if (useLayers()) scene = createScene(document.querySelector('.scene'), flavors[selected].accent);
-  } catch {
-    // The CSS composition remains available without 3D.
-  } finally {
-    scenePending = false;
-  }
 }
 
 reducedMotion.addEventListener('change', syncEffects);

@@ -22,14 +22,15 @@
   <main id="top">
     <section class="hero" id="sabores" aria-labelledby="flavor-title">
       <div class="atmosphere" aria-hidden="true"></div>
-      <div class="scene" aria-hidden="true"></div>
       <div class="stage">
         <div class="edition"><span class="signal"></span> THE FRUITVERSE COLLECTION <span class="edition-number">/ 001</span></div>
         <div class="hero-copy">
           <div class="series"><span class="line"></span><span id="flavor-index">01</span> / 04</div>
           <h1 id="flavor-title"><span class="title-line"><span id="first-word">STRAWBERRY</span></span><span class="title-line"><span id="second-word">RUSH</span></span></h1>
           <p id="flavor-description">Morango intenso. Frescor elétrico. Uma explosão de sabor a cada gole.</p>
-          <button class="next-flavor" type="button">Próximo sabor <span aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12L12 4M5 4h7v7"/></svg></span></button>
+          <div class="hero-actions"><button class="next-flavor" type="button">Próximo sabor <span aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12L12 4M5 4h7v7"/></svg></span></button>
+            <button class="view-toggle" type="button" aria-pressed="false" aria-controls="model-view" hidden>Explorar em 3D</button>
+          </div>
         </div>
         <div class="visual">
           <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
@@ -40,6 +41,7 @@
                 <div class="artwork">
                   <img id="packshot" class="can" src="/flavors/strawberry.webp" alt="Lata de Strawberry Rush com morangos" width="922" height="1152" fetchpriority="high">
                 </div>
+                <div id="model-view" class="model-view" role="group" aria-label="Embalagem tridimensional. Arraste ou use as setas para girar." tabindex="-1" hidden></div>
               </div>
             </div>
           </div>
@@ -48,6 +50,7 @@
         <span class="vertical-note" aria-hidden="true">BEYOND THE FLAVOR &nbsp; — &nbsp; FRUITVERSE®</span>
       </div>
       <div id="flavor-picker" class="flavor-picker" role="group" aria-label="Escolha um sabor"></div>
+      <p id="model-announcement" class="sr-only" role="status"></p>
       <p id="flavor-announcement" class="sr-only" role="status"></p>
     </section>
     <section id="colecao" class="collection" aria-labelledby="collection-title">
