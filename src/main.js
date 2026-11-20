@@ -1,6 +1,7 @@
 import '@fontsource/barlow-condensed/latin-800.css';
 import '@fontsource-variable/space-grotesk';
 import './style.css';
+import './cinematic.css';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { flavors, nextIndex } from './flavors.js';
@@ -12,6 +13,10 @@ const hero = document.querySelector('.hero');
 const picker = document.querySelector('#flavor-picker');
 const product = document.querySelector('.product');
 const frame = document.querySelector('.product-frame');
+const studioLight = document.querySelector('.studio-light');
+const lightBeam = studioLight.querySelector('i');
+const atmosphere = document.querySelector('.atmosphere');
+const legacyPalette = !CSS.supports('color', 'color-mix(in srgb, red, blue)');
 const modelView = document.querySelector('#model-view');
 const modelToggle = document.querySelector('.view-toggle');
 const modelStatus = document.querySelector('#model-announcement');
@@ -22,8 +27,10 @@ const words = [...document.querySelectorAll('.title-line > span')];
 const loader = document.querySelector('.loader');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const desktopPointer = matchMedia('(min-width: 761px) and (pointer: fine)');
-const lowPower = navigator.connection?.saveData || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
-const useLayers = () => desktopPointer.matches && !reducedMotion.matches && !lowPower;
+const saveData = navigator.connection?.saveData;
+const lowPower = saveData || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+const useLayers = () => desktopPointer.matches && !reducedMotion.matches && !saveData;
+const canOfferWebGL = () => useLayers() && !lowPower;
 let activeArt = frame.querySelector('.artwork');
 let selected = 0;
 let requested = 0;
@@ -146,18 +153,26 @@ async function select(index) {
   transition
     .to(words, { yPercent: -106, stagger: 0.025, duration: 0.25 }, 0)
     .to(description, { opacity: 0, y: -6, duration: 0.23 }, 0)
-    .to(outgoing, { opacity: 0, scale: 0.94, rotation: 8, duration: 0.33 }, 0)
+    .to(outgoing, { opacity: 0, scale: 0.93, rotation: 8, rotationY: -22, x: -28, z: -65, duration: 0.33 }, 0)
     .to(orbits, { opacity: 0.04, duration: 0.28 }, 0)
     .call(swap, [], 0.33)
     .fromTo(artwork, { opacity: 0 }, { opacity: 1, duration: 0.42, clearProps: 'opacity', immediateRender: false }, 0.33)
-    .fromTo(incomingCan, { scale: 0.91, rotation: -9, y: 14 }, {
-      scale: 1, rotation: 0, y: 0, duration: 0.74, ease: 'power3.out', clearProps: 'transform', immediateRender: false,
+    .fromTo(lightBeam, { xPercent: -24, scale: 0.88, opacity: 0.08 }, {
+      xPercent: 9, scale: 1.14, opacity: 0.72, duration: 0.53, ease: 'power2.out', immediateRender: false,
+    }, 0.19)
+    .to(lightBeam, { xPercent: 0, scale: 1, opacity: 0.32, duration: 0.38, clearProps: 'transform,opacity' }, 0.72)
+    .fromTo(incomingCan, { scale: 0.85, rotation: -10, rotationY: 30, x: 24, y: 24, z: -92 }, {
+      scale: 1, rotation: 0, rotationY: 0, x: 0, y: 0, z: 0, duration: 0.74, ease: 'power3.out', clearProps: 'transform', immediateRender: false,
     }, 0.33)
     .fromTo(words, { yPercent: 109 }, {
       yPercent: 0, duration: 0.54, stagger: 0.06, ease: 'power4.out', clearProps: 'transform', immediateRender: false,
     }, 0.36)
     .to(description, { opacity: 1, y: 0, duration: 0.37, clearProps: 'opacity,transform' }, 0.44)
     .to(orbits, { opacity: (index) => index ? 0.17 : 0.25, duration: 0.54, clearProps: 'opacity' }, 0.36);
+  if (legacyPalette) {
+    transition.to(atmosphere, { opacity: 0.14, duration: 0.29 }, 0)
+      .to(atmosphere, { opacity: 1, duration: 0.54, clearProps: 'opacity' }, 0.33);
+  }
   const outgoingFruit = outgoing.querySelectorAll('.fruit');
   const incomingFruit = artwork.querySelectorAll('.fruit');
   if (outgoingFruit.length) {
@@ -237,6 +252,7 @@ media.add('(min-width: 761px) and (prefers-reduced-motion: no-preference)', () =
     .to('.orbit-two', { rotation: -18, y: -31, ease: 'none' }, 0)
     .to('.cross-top', { y: -40, ease: 'none' }, 0)
     .to('.cross-bottom', { y: 25, ease: 'none' }, 0)
+    .to(studioLight, { yPercent: -11, scale: 1.18, ease: 'none' }, 0)
     .to(pageMotion, { scroll: 1, ease: 'none', onUpdate() { scene?.setScroll(pageMotion.scroll); } }, 0);
 });
 
@@ -275,12 +291,14 @@ const tiltX = gsap.quickTo(product, 'rotationX', { duration: 0.6, ease: 'power3.
 const tiltY = gsap.quickTo(product, 'rotationY', { duration: 0.6, ease: 'power3.out' });
 const shiftX = gsap.quickTo(product, 'x', { duration: 0.6, ease: 'power3.out' });
 const shiftY = gsap.quickTo(product, 'y', { duration: 0.6, ease: 'power3.out' });
+const lightX = gsap.quickTo(studioLight, 'xPercent', { duration: 0.82, ease: 'power3.out' });
 
 function pointAt(x, y) {
-  tiltX(y * -9);
-  tiltY(x * 15);
-  shiftX(x * 24);
-  shiftY(y * 18);
+  tiltX(y * -13);
+  tiltY(x * 22);
+  shiftX(x * 32);
+  shiftY(y * 22);
+  lightX(x * -13);
   scene?.setPointer(x, y);
 }
 
@@ -314,12 +332,18 @@ async function openModel() {
   modelToggle.disabled = true;
   modelStatus.textContent = 'Carregando a embalagem 3D.';
   try {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('webgl2', { alpha: true, antialias: true, powerPreference: 'low-power' });
+    if (!context) {
+      closeModel('WebGL 2 indisponível. A perspectiva cinematográfica continua ativa.');
+      return;
+    }
     const [{ createScene }] = await Promise.all([import('./scene.js'), document.fonts.ready]);
-    if (request !== sceneRequest || !useLayers()) return;
+    if (request !== sceneRequest || !canOfferWebGL()) return;
     finishTransition();
     modelView.hidden = false;
-    scene = createScene(modelView, flavors[selected], () => {
-      closeModel('A sessão WebGL foi interrompida. A arte original foi restaurada.');
+    scene = createScene(modelView, context, flavors[selected], () => {
+      closeModel('A sessão WebGL foi interrompida. A perspectiva cinematográfica foi restaurada.');
     });
     if (!scene) {
       closeModel('A visualização 3D está indisponível neste dispositivo.');
@@ -364,8 +388,8 @@ modelView.addEventListener('keydown', (event) => {
 });
 
 function syncEffects() {
-  modelToggle.hidden = !useLayers();
-  if (!useLayers() && (scene || modelLoading)) closeModel();
+  modelToggle.hidden = !canOfferWebGL();
+  if (!canOfferWebGL() && (scene || modelLoading)) closeModel();
   if (reducedMotion.matches) {
     intro?.progress(1);
     finishTransition();
@@ -373,8 +397,9 @@ function syncEffects() {
   if (!desktopPointer.matches || reducedMotion.matches) {
     hero.removeEventListener('pointermove', move);
     hero.removeEventListener('pointerleave', resetPointer);
-    for (const setter of [tiltX, tiltY, shiftX, shiftY]) setter.tween.pause();
+    for (const setter of [tiltX, tiltY, shiftX, shiftY, lightX]) setter.tween.pause();
     gsap.set(product, { x: 0, y: 0, rotationX: 0, rotationY: 0 });
+    gsap.set(studioLight, { xPercent: 0 });
     return;
   }
   hero.addEventListener('pointermove', move);

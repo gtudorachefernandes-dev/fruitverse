@@ -28,8 +28,9 @@ Para usar GitHub Pages, envie os arquivos para a branch principal, abra **Settin
 - `src/flavors.js` reúne o conteúdo, as cores e as imagens de cada sabor.
 - `src/artwork.js` e `src/fruit-layout.json` compõem as frutas separadas sobre as artes originais em desktops compatíveis.
 - `src/can-model.js` constrói a embalagem metálica, o rótulo procedural por sabor e os pedaços de manga.
-- `src/scene.js` controla iluminação, câmera e renderização WebGL. O módulo é carregado ao abrir **Explorar em 3D** em um desktop compatível.
+- `src/scene.js` controla iluminação, câmera e renderização WebGL. O módulo é carregado ao abrir **Explorar em 3D**, depois que o navegador fornece um contexto WebGL 2.
+- `src/cinematic.css` usa planos em perspectiva, flutuação e iluminação para animar as artes sem WebGL.
 
-O modo 3D preserva o packshot como visual padrão e usa uma interpretação própria do rótulo. Arraste a lata ou use as setas para girar. Pressione **Esc** ou **Ver arte original** para voltar. A imagem continua disponível sem WebGL, em celulares e com movimento reduzido ativo.
+O modo 3D preserva o packshot como visual padrão e usa uma interpretação própria do rótulo. Arraste a lata ou use as setas para girar. Pressione **Esc** ou **Ver arte original** para voltar. Sem WebGL 2, a perspectiva cinematográfica usa as artes existentes com paralaxe, flutuação e transições de sabor sincronizadas. As frutas são separadas em planos nos desktops com ponteiro fino. Em telas menores, a composição usa a arte original em um único plano. Com movimento reduzido, a troca preserva as imagens e as cores com animações de deslocamento desativadas.
 - `src/style.css` define a direção de arte, o layout responsivo e as regras de movimento reduzido.
 - `public/flavors/` contém os quatro packshots em WebP e as camadas opcionais para desktop.
