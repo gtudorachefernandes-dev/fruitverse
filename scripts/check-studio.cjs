@@ -19,12 +19,12 @@ await page.click('.view-toggle');await page.waitForSelector('.model-view canvas'
 for(const [i,id] of ['strawberry','mango','blueberry','lime'].entries()){
 await page.locator('#flavor-picker button').nth(i).click();
 await page.waitForSelector('.hero[data-flavor='+id+']');
-for(const view of ['front','side','back','top']){
+for(const view of ['front','quarter','side','back','top','bottom','macro','']){
 await page.selectOption('#inspection-view',view);await page.waitForTimeout(200);
-await page.locator('.model-view canvas').screenshot({path:join(output,id+'-'+view+'.png')});
+await page.locator(view ? '.model-view canvas' : '.stage').screenshot({path:join(output,id+'-'+(view || 'scene')+'.png')});
 }}
 await page.click('.view-toggle');
-for(const sel of ['.exploration','.collection','.manifesto','.footer']){
+for(const sel of ['.exploration','.collection','.taste-guide','.manifesto','.finale','.footer']){
 await page.locator(sel).screenshot({path:join(output,sel.slice(1)+'.png')});
 }
 assert.deepEqual(errors,[]);

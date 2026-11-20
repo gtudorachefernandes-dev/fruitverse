@@ -84,3 +84,10 @@
     --second-top:calc(var(--word-top) + var(--word-size) * 1.28);
   }
 }
+
+@media(max-width:760px) {
+  .flavor-card { display:grid; grid-template-rows:minmax(135px,1fr) auto; }
+  .flavor-card .card-image { position:relative; inset:auto; }
+  .flavor-card .card-image img { inset:4% 5% auto auto; width:90%; height:92%; }
+  .flavor-card .card-info { position:relative; padding-top:4px; }
+}

@@ -1,32 +1,9 @@
+import { lightStudio } from './3d/lighting.js';
 import { createCan } from './can-model.js';
 import { createFruitSet, fruitLayouts } from './3d/fruits.js';
 import { compositions, createOrbit } from './3d/camera.js';
 
-function studioTexture(THREE) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 0, 128);
-  gradient.addColorStop(0, '#7d7a91');
-  gradient.addColorStop(0.47, '#39354e');
-  gradient.addColorStop(1, '#14111d');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 256, 128);
-  const panels = [
-    [50, 35, 28, 55, '#fff6e8'], [111, 25, 11, 79, '#eef2ff'],
-    [161, 10, 39, 38, '#e3e7ff'], [221, 34, 17, 52, '#ffeedf'],
-  ];
-  for (const [x, y, w, h, color] of panels) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h);
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-export function createScene(THREE, container, { context, lite }, flavor, onLost, prints) {
+export function createScene(THREE, container, { context, lite }, flavor, onLost, prints, fruitImages) {
   const canvas = context.canvas;
   if (context.isContextLost()) return;
 
@@ -41,20 +18,7 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(33, 1, 0.1, 32);
-  let environment;
-  if (!lite) {
-    const studio = studioTexture(THREE);
-    const generator = new THREE.PMREMGenerator(renderer);
-    try {
-      environment = generator.fromEquirectangular(studio);
-      scene.environment = environment.texture;
-      scene.environmentIntensity = 0.9;
-    } finally {
-      studio.dispose();
-      generator.dispose();
-    }
-  }
-
+  const environment = lightStudio(THREE, renderer, scene, lite);
   const key = new THREE.DirectionalLight('#fff1e6', lite ? 2.05 : 1.8);
   key.position.set(2, 4, 5);
   const rim = new THREE.DirectionalLight(flavor.accent, lite ? 1.55 : 2.35);
@@ -95,6 +59,7 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
   let view;
   let current;
   let fruits;
+  let arrival = 1;
   let sizeReady = false;
   let reduced = false;
   let transitioning = false;
@@ -103,6 +68,7 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
 
   function setFlavor(next) {
     if (next === current) return;
+    arrival = current ? 0 : 1;
     current = next;
     const composition = compositions[next.id];
     keyColor.set(composition.key);
@@ -111,7 +77,7 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
     dustGeometry.setDrawRange(0, lite || compact ? Math.min(composition.points, 16) : composition.points);
     can.setPrint(prints[next.id]);
     fruitRoot.clear();
-    if (!fruitCache.has(next.id)) fruitCache.set(next.id, createFruitSet(THREE, next.id, lite || compact));
+    if (!fruitCache.has(next.id)) fruitCache.set(next.id, createFruitSet(THREE, next.id, lite || compact, fruitImages));
     fruits = fruitCache.get(next.id).pieces;
     fruitRoot.add(...fruits);
   }
@@ -136,13 +102,15 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
     dust.rotation.z = time * 0.055 + cameraTarget.swing * 0.2;
     fruitRoot.scale.setScalar(1 + Math.max(-0.35, -cameraTarget.travel * 0.24));
     fruitRoot.rotation.y = cameraTarget.swing * 0.63;
+    arrival += (1-arrival)*mix;
     fruits.forEach((piece, i) => {
       const [x, y, z] = fruitLayouts[current.id][i];
       const drift = Math.sin(time * (0.53 + i * 0.12) + i) * (current.id === 'mango' ? 0.17 : 0.07);
       piece.position.set(x + drift + pointerX * (0.12 + i * 0.13), y + Math.sin(time * (0.9 + i * 0.27) + i) * 0.18, z);
-      const showCut = (i === 1 && current.id !== 'mango') || (i === 2 && current.id === 'lime');
-      piece.rotation.set((showCut ? -1.28 : 0.58) + time * (0.18 + i * 0.12), time * -0.3 + i, i * 0.54);
-      piece.scale.setScalar(1 - i * 0.11);
+      piece.rotation.set(.09*Math.sin(time*.45+i), .24*Math.sin(time*.33+i)+pointerX*.10,
+        (i-1)*.13+.07*Math.sin(time*.4+i));
+      piece.scale.setScalar((1-i*.09)*(.83+.17*arrival));
+
     });
     const fov = motion.fov + Math.min(2.2, Math.max(-1, cameraTarget.travel * 1.25));
     camera.fov = fov;
@@ -152,10 +120,10 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
       motion.y + pointerY * 0.25 + scrollMotion * 0.23, Math.max(motion.distance, 6.65 / camera.aspect) + cameraTarget.travel + scrollMotion * 1.04);
     camera.lookAt(0, -0.16 * scrollMotion, 0);
     if (view) {
-      camera.position.set(0, 0, 8.6);
+      camera.position.set(0, 0, view === 'macro' ? 3.2 : ['top','bottom'].includes(view) ? 4.7 : 8.2);
       camera.lookAt(0, 0, 0);
       can.group.position.set(0, 0, 0);
-      const angles = { front: [0, 0], side: [0, Math.PI/2], back: [0, Math.PI], top: [Math.PI/2, 0] };
+      const angles = { front: [0, 0], quarter:[0,Math.PI/4], macro:[0,.34], bottom:[-Math.PI/2,0], side: [0, Math.PI/2], back: [0, Math.PI], top: [Math.PI/2, 0] };
       const [x, y] = angles[view];
       can.group.rotation.set(x, Math.PI + y, 0, 'XYZ');
     }

@@ -1,3 +1,4 @@
+import { lightStudio } from './lighting.js';
 import { createCan } from '../can-model.js';
 
 export function createStudio(THREE, config, floor, flavors, prints) {
@@ -6,6 +7,7 @@ export function createStudio(THREE, config, floor, flavors, prints) {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.4));
   renderer.setClearColor(0, 0);
   const scene = new THREE.Scene();
+  const environment = lightStudio(THREE, renderer, scene, config.lite);
   const camera = new THREE.PerspectiveCamera(31, 1, .1, 50);
   const cans = flavors.map(({id}, i) => {
     const can = createCan(THREE, config.lite);
@@ -52,6 +54,7 @@ export function createStudio(THREE, config, floor, flavors, prints) {
   return {shot, draw, dispose() {
     size.disconnect();
     cans.forEach(can => can.dispose());
+    environment?.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
     canvas.remove();

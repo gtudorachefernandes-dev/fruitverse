@@ -360,7 +360,8 @@ async function openModel() {
       closeModel('WebGL indisponível. A perspectiva cinematográfica continua ativa.');
       return;
     }
-    const [{ createScene }, THREE, prints] = await Promise.all([import('./scene.js'), loadRenderer(renderer.lite), loadPrints()]);
+    const [{ createScene }, THREE, prints, fruitImages] = await Promise.all([import('./scene.js'), loadRenderer(renderer.lite), loadPrints(),
+      import('./3d/fruit-images.js').then(module => module.loadFruitImages())]);
     if (request !== sceneRequest) {
       renderer.context.getExtension('WEBGL_lose_context')?.loseContext();
       return;
@@ -369,7 +370,7 @@ async function openModel() {
     modelView.hidden = false;
     scene = createScene(THREE, modelView, renderer, flavors[flavorFlow.selected], () => {
       closeModel('A sessão WebGL foi interrompida. A perspectiva cinematográfica foi restaurada.');
-    }, prints);
+    }, prints, fruitImages);
     if (!scene) {
       closeModel('A visualização 3D está indisponível neste dispositivo.');
       return;

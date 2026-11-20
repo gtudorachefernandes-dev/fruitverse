@@ -1,3 +1,7 @@
+# Revisões FRUITVERSE
+
+[Prévia, modelos, capturas e relatório da versão 5.1](5.1/README.md)
+
 # FRUITVERSE 4.1 — Director’s Cut
 
 Extraia o ZIP da branch e abra **FRUITVERSE-4.1.html** nesta pasta. O arquivo contém fontes, texturas, artes e módulos do build. Funciona sem instalar Node ou iniciar um servidor.
