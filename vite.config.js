@@ -5,7 +5,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: { three: ['three'] },
+        manualChunks(id) {
+          if (id.endsWith('/three/build/three.core.js')) return 'three-core';
+          if (id.endsWith('/three/build/three.module.js')) return 'three-renderer';
+        },
       },
     },
   },

@@ -50,7 +50,7 @@ a { text-decoration: none; }
   padding-inline: var(--gutter); min-height: calc(100svh - 76px); display: flex; flex-direction: column;
   transition: --accent 0.55s, --glow 0.55s, --dark 0.55s;
 }
-.atmosphere, .scene { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.atmosphere { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
 .atmosphere {
   background: radial-gradient(ellipse at 66% 48%, var(--glow), transparent 57%),
     repeating-linear-gradient(90deg, transparent 0 calc(16.6667% - 1px), #fff2ee09 calc(16.6667% - 1px) 16.6667%);
@@ -61,7 +61,6 @@ a { text-decoration: none; }
   background-size: 27px 27px;
   mask-image: radial-gradient(ellipse at 76% 38%, #000, transparent 70%);
 }
-.scene canvas { display: block; width: 100%; height: 100%; }
 .stage {
   position: relative; display: grid; grid-template-columns: 1fr 0.92fr; align-items: center;
   flex: 1; min-height: clamp(570px, 75svh, 850px); padding-block: 88px 54px;
@@ -261,4 +260,39 @@ h1 {
   .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card-info { min-height: 72px; }
   .footer-bar { font-size: 0.7rem; }
+}
+
+.hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px 13px; }
+.view-toggle {
+  padding: 11px 15px;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border-radius: 40px;
+  background: #1908108c;
+  color: var(--cream);
+  font-size: 0.77rem;
+  font-weight: 700;
+  transition: background 0.25s, border-color 0.25s;
+}
+.view-toggle:hover, .view-toggle[aria-pressed='true'] { border-color: var(--accent); background: var(--dark); }
+.view-toggle:disabled { cursor: progress; }
+.model-view {
+  position: absolute; inset: 0;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.model-view:active { cursor: grabbing; }
+.model-view canvas { display: block; width: 100%; height: 100%; }
+.model-view:focus-visible { outline: 1px dashed var(--accent); outline-offset: -4px; }
+.show-model .can, .hero[data-flavor='mango'] .show-model .fruit { opacity: 0; }
+.hero[data-flavor='strawberry'] .orbit-one { border-style: solid; }
+.hero[data-flavor='mango'] .atmosphere::after { background-size: 48px 27px; }
+.hero[data-flavor='blueberry'] .atmosphere::after { background-size: 39px 39px; opacity: 0.76; }
+.hero[data-flavor='blueberry'] .orbit-one { border-style: dotted; }
+.hero[data-flavor='lime'] .orbit-two { border-radius: 42%; }
+.hero[data-flavor='lime'] .atmosphere::after { background-size: 32px 32px; }
+.orbit-two { transition: border-radius 0.45s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .view-toggle, .orbit-two { transition: none; }
 }

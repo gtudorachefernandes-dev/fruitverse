@@ -27,6 +27,9 @@ Para usar GitHub Pages, envie os arquivos para a branch principal, abra **Settin
 - `src/main.js` gerencia a seleção dos sabores, o carregamento e as animações com GSAP e ScrollTrigger.
 - `src/flavors.js` reúne o conteúdo, as cores e as imagens de cada sabor.
 - `src/artwork.js` e `src/fruit-layout.json` compõem as frutas separadas sobre as artes originais em desktops compatíveis.
-- `src/scene.js` renderiza partículas 3D com Three.js quando o dispositivo comporta o efeito.
+- `src/can-model.js` constrói a embalagem metálica, o rótulo procedural por sabor e os pedaços de manga.
+- `src/scene.js` controla iluminação, câmera e renderização WebGL. O módulo é carregado ao abrir **Explorar em 3D** em um desktop compatível.
+
+O modo 3D preserva o packshot como visual padrão e usa uma interpretação própria do rótulo. Arraste a lata ou use as setas para girar. Pressione **Esc** ou **Ver arte original** para voltar. A imagem continua disponível sem WebGL, em celulares e com movimento reduzido ativo.
 - `src/style.css` define a direção de arte, o layout responsivo e as regras de movimento reduzido.
 - `public/flavors/` contém os quatro packshots em WebP e as camadas opcionais para desktop.
