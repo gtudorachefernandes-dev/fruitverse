@@ -25,13 +25,11 @@ function studioTexture() {
   return texture;
 }
 
-export function createScene(container, flavor, onLost) {
-  const canvas = document.createElement('canvas');
-  const options = { alpha: true, antialias: true, powerPreference: 'low-power' };
-  const context = canvas.getContext('webgl2', options);
-  if (!context) return;
+export function createScene(container, context, flavor, onLost) {
+  const canvas = context.canvas;
+  if (context.isContextLost()) return;
 
-  const renderer = new THREE.WebGLRenderer({ canvas, context, ...options });
+  const renderer = new THREE.WebGLRenderer({ canvas, context });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
   renderer.setClearColor(0, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;

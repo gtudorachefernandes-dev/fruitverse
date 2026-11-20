@@ -101,18 +101,7 @@ h1 {
 }
 .artwork { position: absolute; inset: 0; }
 .can { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 20px 28px #09040878); }
-.fruit {
-  position: absolute;
-  animation: float-fruit 5.8s ease-in-out -1.2s infinite;
-  filter: drop-shadow(0 8px 8px #09040845);
-  --drift-x: -8px; --drift-y: -10px; --drift-angle: -3deg;
-}
-.fruit:nth-of-type(3) { animation-duration: 7.1s; animation-delay: -3.4s; --drift-x: 8px; --drift-y: -7px; --drift-angle: 4deg; }
-.fruit:nth-of-type(4) { animation-duration: 6.3s; animation-delay: -4.2s; --drift-x: -4px; --drift-y: 6px; --drift-angle: 6deg; }
-.offscreen .fruit { animation-play-state: paused; }
-@keyframes float-fruit {
-  50% { translate: var(--drift-x) var(--drift-y); rotate: var(--drift-angle); }
-}
+.fruit { position: absolute; filter: drop-shadow(0 8px 8px #09040845); }
 .orbit { position: absolute; aspect-ratio: 1; border: 1px solid var(--accent); opacity: 0.25; border-radius: 50%; width: 79%; }
 .orbit-two { width: 67%; opacity: 0.17; border-style: dashed; }
 .cross, .visual-note, .vertical-note { position: absolute; font-weight: 600; color: var(--accent); }
@@ -127,7 +116,7 @@ h1 {
   border: 1px solid #fff2ee2b; background: #160a1490; transition: background 0.25s, border-color 0.25s;
 }
 .flavor-picker button:hover { background: #fff2ee16; }
-.flavor-picker button[aria-pressed='true'] { border-color: var(--swatch); background: color-mix(in srgb, var(--swatch) 15%, #180b14); }
+.flavor-picker button[aria-pressed='true'] { border-color: var(--swatch); background: #fff2ee16; }
 .chip { background: var(--swatch); width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .choice-index { margin-left: auto; color: var(--swatch); font-size: 0.65rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); }
@@ -159,7 +148,6 @@ h1 {
   .visual { position: relative; inset: auto; order: 1; height: clamp(270px, 43svh, 450px); }
   .product { width: 100%; }
   .product-frame { width: min(100%, clamp(216px, 34.4svh, 360px)); }
-  .fruit { animation: none; }
   .orbit { width: min(73%, 310px); }
   .orbit-two { width: min(62%, 270px); }
   .visual-note { right: 0; bottom: 3%; }
@@ -174,7 +162,6 @@ h1 {
 }
 @media (prefers-reduced-motion: reduce) {
   :root { scroll-behavior: auto; }
-  .fruit { animation: none; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
@@ -265,13 +252,17 @@ h1 {
 .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px 13px; }
 .view-toggle {
   padding: 11px 15px;
-  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border: 1px solid var(--accent);
   border-radius: 40px;
   background: #1908108c;
   color: var(--cream);
   font-size: 0.77rem;
   font-weight: 700;
   transition: background 0.25s, border-color 0.25s;
+}
+@supports (color: color-mix(in srgb, red, blue)) {
+  .flavor-picker button[aria-pressed='true'] { background: color-mix(in srgb, var(--swatch) 15%, #180b14); }
+  .view-toggle { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 }
 .view-toggle:hover, .view-toggle[aria-pressed='true'] { border-color: var(--accent); background: var(--dark); }
 .view-toggle:disabled { cursor: progress; }
