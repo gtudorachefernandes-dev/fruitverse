@@ -5,6 +5,7 @@ import './cinematic.css';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { flavors, nextIndex } from './flavors.js';
+import { scenes } from './scenes.js';
 import { createArtwork, decodeArtwork } from './artwork.js';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -16,11 +17,11 @@ const frame = document.querySelector('.product-frame');
 const studioLight = document.querySelector('.studio-light');
 const lightBeam = studioLight.querySelector('i');
 const atmosphere = document.querySelector('.atmosphere');
-const legacyPalette = !CSS.supports('color', 'color-mix(in srgb, red, blue)');
 const modelView = document.querySelector('#model-view');
 const modelToggle = document.querySelector('.view-toggle');
 const modelStatus = document.querySelector('#model-announcement');
-const orbits = [...document.querySelectorAll('.orbit')];
+const posterPlanes = [...document.querySelectorAll('.scenery i')];
+const heroMeta = document.querySelector('.hero-meta');
 const pageMotion = { scroll: 0 };
 const description = document.querySelector('#flavor-description');
 const words = [...document.querySelectorAll('.title-line > span')];
@@ -47,18 +48,21 @@ const choices = flavors.map((flavor, index) => {
   const button = document.createElement('button');
   button.type = 'button';
   button.style.setProperty('--swatch', flavor.accent);
-  button.innerHTML = `<span class="chip" aria-hidden="true"></span><span class="flavor-name">${flavor.name}</span><span class="choice-index" aria-hidden="true">${number(index)}</span>`;
+  button.innerHTML = `<span class="chip" aria-hidden="true"></span><span class="flavor-name">${flavor.name}</span>`;
   button.addEventListener('click', () => select(index));
   picker.append(button);
   return button;
 });
 
 const grid = document.querySelector('#collection-grid');
+const tasteList = document.querySelector('#taste-list');
 const cards = flavors.map((flavor, index) => {
   const card = document.createElement('article');
   card.className = 'flavor-card';
-  card.style.setProperty('--card-accent', flavor.accent);
-  card.style.setProperty('--card-glow', flavor.glow);
+  card.dataset.flavor = flavor.id;
+  const taste = document.createElement('div');
+  taste.innerHTML = `<dt><span aria-hidden="true" style="--taste-color:${flavor.accent}"></span>${flavor.name}</dt><dd>${flavor.note}</dd>`;
+  tasteList.append(taste);
   card.innerHTML = `
     <div class="card-image">
       <span aria-hidden="true">${number(index)} / 04</span>
@@ -88,10 +92,8 @@ function render(index, announce = false) {
   hero.dataset.flavor = flavor.id;
   hero.style.setProperty('--accent', flavor.accent);
   hero.style.setProperty('--glow', flavor.glow);
-  hero.style.setProperty('--dark', flavor.dark);
   words.forEach((word, position) => { word.textContent = flavor.title[position]; });
   document.querySelector('#flavor-index').textContent = number(index);
-  document.querySelector('#figure-index').textContent = number(index);
   description.textContent = flavor.description;
   choices.forEach((button, position) => button.setAttribute('aria-pressed', String(position === index)));
   scene?.setFlavor(flavor);
@@ -149,30 +151,38 @@ async function select(index) {
 
   const outgoing = activeArt;
   const incomingCan = artwork.querySelector('.can');
+  const leaving = scenes[flavors[selected].id];
+  const entering = scenes[flavor.id];
+  const amplitude = desktopPointer.matches ? 1 : 0.55;
   transition = gsap.timeline({ defaults: { ease: 'power2.inOut' } });
   transition
     .to(words, { yPercent: -106, stagger: 0.025, duration: 0.25 }, 0)
-    .to(description, { opacity: 0, y: -6, duration: 0.23 }, 0)
-    .to(outgoing, { opacity: 0, scale: 0.93, rotation: 8, rotationY: -22, x: -28, z: -65, duration: 0.33 }, 0)
-    .to(orbits, { opacity: 0.04, duration: 0.28 }, 0)
+    .to(heroMeta, { opacity: 0, y: -12, duration: 0.23 }, 0)
+    .to(outgoing, {
+      opacity: 0, scale: 0.86, rotation: -leaving.turn, rotationY: -leaving.yaw * 0.7,
+      x: -leaving.x * amplitude, y: -leaving.y * amplitude, z: leaving.depth, duration: 0.33,
+    }, 0)
+    .to(atmosphere, { opacity: 0, duration: 0.32 }, 0)
     .call(swap, [], 0.33)
+    .to(atmosphere, { opacity: 1, duration: 0.46, clearProps: 'opacity' }, 0.33)
+    .fromTo(posterPlanes, { x: (i) => entering.x * (i + 1) * -0.23, y: entering.y * 0.36, scale: 1.08 }, {
+      x: 0, y: 0, scale: 1, duration: 0.72, stagger: 0.035, clearProps: 'transform', immediateRender: false,
+    }, 0.33)
     .fromTo(artwork, { opacity: 0 }, { opacity: 1, duration: 0.42, clearProps: 'opacity', immediateRender: false }, 0.33)
     .fromTo(lightBeam, { xPercent: -24, scale: 0.88, opacity: 0.08 }, {
       xPercent: 9, scale: 1.14, opacity: 0.72, duration: 0.53, ease: 'power2.out', immediateRender: false,
     }, 0.19)
     .to(lightBeam, { xPercent: 0, scale: 1, opacity: 0.32, duration: 0.38, clearProps: 'transform,opacity' }, 0.72)
-    .fromTo(incomingCan, { scale: 0.85, rotation: -10, rotationY: 30, x: 24, y: 24, z: -92 }, {
+    .fromTo(incomingCan, {
+      scale: entering.scale, rotation: entering.turn, rotationY: entering.yaw,
+      x: entering.x * amplitude, y: entering.y * amplitude, z: entering.depth,
+    }, {
       scale: 1, rotation: 0, rotationY: 0, x: 0, y: 0, z: 0, duration: 0.74, ease: 'power3.out', clearProps: 'transform', immediateRender: false,
     }, 0.33)
     .fromTo(words, { yPercent: 109 }, {
       yPercent: 0, duration: 0.54, stagger: 0.06, ease: 'power4.out', clearProps: 'transform', immediateRender: false,
     }, 0.36)
-    .to(description, { opacity: 1, y: 0, duration: 0.37, clearProps: 'opacity,transform' }, 0.44)
-    .to(orbits, { opacity: (index) => index ? 0.17 : 0.25, duration: 0.54, clearProps: 'opacity' }, 0.36);
-  if (legacyPalette) {
-    transition.to(atmosphere, { opacity: 0.14, duration: 0.29 }, 0)
-      .to(atmosphere, { opacity: 1, duration: 0.54, clearProps: 'opacity' }, 0.33);
-  }
+    .to(heroMeta, { opacity: 1, y: 0, duration: 0.37, clearProps: 'opacity,transform' }, 0.44);
   const outgoingFruit = outgoing.querySelectorAll('.fruit');
   const incomingFruit = artwork.querySelectorAll('.fruit');
   if (outgoingFruit.length) {
@@ -248,10 +258,7 @@ media.add('(min-width: 761px) and (prefers-reduced-motion: no-preference)', () =
     scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.6 },
   });
   gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.7 } })
-    .to('.orbit-one', { rotation: 24, scale: 1.14, ease: 'none' }, 0)
-    .to('.orbit-two', { rotation: -18, y: -31, ease: 'none' }, 0)
-    .to('.cross-top', { y: -40, ease: 'none' }, 0)
-    .to('.cross-bottom', { y: 25, ease: 'none' }, 0)
+    .to('.scenery', { yPercent: 8, scale: 1.06, ease: 'none' }, 0)
     .to(studioLight, { yPercent: -11, scale: 1.18, ease: 'none' }, 0)
     .to(pageMotion, { scroll: 1, ease: 'none', onUpdate() { scene?.setScroll(pageMotion.scroll); } }, 0);
 });

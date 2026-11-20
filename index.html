@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#18070e">
+  <meta name="theme-color" content="#f4ebdc">
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta name="description" content="Fruitverse. Quatro sabores que levam a fruta além do esperado.">
   <title>FRUITVERSE® — Beyond the Flavor</title>
@@ -20,22 +20,24 @@
     <a class="header-link" href="#colecao">Explore a coleção <span aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12L12 4M5 4h7v7"/></svg></span></a>
   </header>
   <main id="top">
-    <section class="hero" id="sabores" aria-labelledby="flavor-title">
-      <div class="atmosphere" aria-hidden="true"></div>
+    <section class="hero" id="sabores" data-flavor="strawberry" aria-labelledby="flavor-title">
       <div class="stage">
-        <div class="edition"><span class="signal"></span> THE FRUITVERSE COLLECTION <span class="edition-number">/ 001</span></div>
+        <div class="atmosphere" aria-hidden="true">
+          <div class="scenery"><i></i><i></i><i></i></div>
+          <div class="studio-light"><i></i></div>
+        </div>
+        <div class="edition">FRUITVERSE® <span> / </span> EDIÇÃO DE SABORES</div>
         <div class="hero-copy">
-          <div class="series"><span class="line"></span><span id="flavor-index">01</span> / 04</div>
-          <h1 id="flavor-title"><span class="title-line"><span id="first-word">STRAWBERRY</span></span><span class="title-line"><span id="second-word">RUSH</span></span></h1>
-          <p id="flavor-description">Morango intenso. Frescor elétrico. Uma explosão de sabor a cada gole.</p>
-          <div class="hero-actions"><button class="next-flavor" type="button">Próximo sabor <span aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12L12 4M5 4h7v7"/></svg></span></button>
+          <h1 id="flavor-title">
+            <span class="title-line"><span id="first-word">STRAWBERRY</span></span>
+            <span class="title-line"><span id="second-word">RUSH</span></span>
+          </h1>
+          <div class="hero-meta">
+            <p id="flavor-description">Morango intenso. Frescor elétrico. Uma explosão de sabor a cada gole.</p>
             <button class="view-toggle" type="button" aria-pressed="false" aria-controls="model-view" hidden>Explorar em 3D</button>
           </div>
         </div>
         <div class="visual">
-          <div class="studio-light" aria-hidden="true"><i></i></div>
-          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-          <span class="cross cross-top" aria-hidden="true">+</span><span class="cross cross-bottom" aria-hidden="true">+</span>
           <div class="product">
             <div class="product-stage">
               <div class="product-frame">
@@ -46,23 +48,33 @@
               </div>
             </div>
           </div>
-          <span class="visual-note" aria-hidden="true">FIG. <span id="figure-index">01</span> &nbsp; / &nbsp; 330 ML</span>
         </div>
-        <span class="vertical-note" aria-hidden="true">BEYOND THE FLAVOR &nbsp; — &nbsp; FRUITVERSE®</span>
+        <span class="visual-note" aria-hidden="true">FRUIT SODA &nbsp; / &nbsp; 330 ML</span>
       </div>
-      <div id="flavor-picker" class="flavor-picker" role="group" aria-label="Escolha um sabor"></div>
+      <div class="chapter-bar">
+        <span class="chapter-count" aria-hidden="true"><strong id="flavor-index">01</strong><span> / 04</span></span>
+        <div id="flavor-picker" class="flavor-picker" role="group" aria-label="Escolha um sabor"></div>
+        <button class="next-flavor" type="button">Próximo sabor <span aria-hidden="true">→</span></button>
+      </div>
       <p id="model-announcement" class="sr-only" role="status"></p>
       <p id="flavor-announcement" class="sr-only" role="status"></p>
     </section>
     <section id="colecao" class="collection" aria-labelledby="collection-title">
       <div class="collection-heading">
-        <p class="section-label"><span class="signal"></span> A COLEÇÃO</p>
-        <h2 id="collection-title">UM GOLE.<br>QUATRO <em>UNIVERSOS.</em></h2>
+        <p class="section-label">A COLEÇÃO</p>
+        <h2 id="collection-title">QUATRO FORMAS<br>DE SENTIR A <em>FRUTA.</em></h2>
       </div>
       <div id="collection-grid" class="collection-grid"></div>
     </section>
+    <section class="taste-guide" aria-labelledby="taste-title">
+      <div>
+        <p class="section-label">GUIA DE SABOR</p>
+        <h2 id="taste-title">QUAL É A SUA?</h2>
+      </div>
+      <dl id="taste-list"></dl>
+    </section>
     <section id="manifesto" class="manifesto" aria-labelledby="brand-title">
-      <p class="manifesto-label"><span class="signal"></span> O MANIFESTO</p>
+      <p class="manifesto-label">O MANIFESTO</p>
       <div>
         <h2 id="brand-title">BEYOND<br>THE FLAVOR<span>.</span></h2>
         <p>A Fruitverse explora o sabor por inteiro, da primeira impressão ao último gole. Cada bebida nasce da personalidade de uma fruta e ganha seu próprio universo de cor, textura e frescor.</p>

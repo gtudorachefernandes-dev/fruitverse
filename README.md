@@ -1,6 +1,6 @@
 # FRUITVERSE® — Beyond the Flavor
 
-Página inicial interativa para uma coleção de quatro bebidas frutadas. As artes das embalagens e as fontes fazem parte do projeto. A página funciona sem serviços externos ou credenciais próprias.
+Experiência cinematográfica em quatro pôsteres. Cada sabor tem enquadramento, cenário e movimento próprios, com uma galeria editorial e um guia de sabor. As artes das embalagens e as fontes fazem parte do projeto. A página funciona sem serviços externos ou credenciais próprias.
 
 ## Desenvolver no Codex
 
@@ -29,7 +29,9 @@ Para usar GitHub Pages, envie os arquivos para a branch principal, abra **Settin
 - `src/artwork.js` e `src/fruit-layout.json` compõem as frutas separadas sobre as artes originais em desktops compatíveis.
 - `src/can-model.js` constrói a embalagem metálica, o rótulo procedural por sabor e os pedaços de manga.
 - `src/scene.js` controla iluminação, câmera e renderização WebGL. O módulo é carregado ao abrir **Explorar em 3D**, depois que o navegador fornece um contexto WebGL 2.
+- `src/scenes.js` define os trajetos de entrada e saída de cada sabor.
 - `src/cinematic.css` usa planos em perspectiva, flutuação e iluminação para animar as artes sem WebGL.
+- `src/style.css` organiza os quatro pôsteres, a galeria assimétrica e o guia de sabor.
 
 O modo 3D preserva o packshot como visual padrão e usa uma interpretação própria do rótulo. Arraste a lata ou use as setas para girar. Pressione **Esc** ou **Ver arte original** para voltar. Sem WebGL 2, a perspectiva cinematográfica usa as artes existentes com paralaxe, flutuação e transições de sabor sincronizadas. As frutas são separadas em planos nos desktops com ponteiro fino. Em telas menores, a composição usa a arte original em um único plano. Com movimento reduzido, a troca preserva as imagens e as cores com animações de deslocamento desativadas.
 - `src/style.css` define a direção de arte, o layout responsivo e as regras de movimento reduzido.
