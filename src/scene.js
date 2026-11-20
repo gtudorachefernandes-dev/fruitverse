@@ -85,6 +85,8 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
   let animation = 0;
   let last = 0;
   let elapsed = 0;
+  let phase = 0;
+  let idleWeight = 0;
   let inView = true;
   let lost = false;
   let scroll = 0;
@@ -121,9 +123,11 @@ export function createScene(THREE, container, { context, lite }, flavor, onLost,
     for (const property of ['x', 'y', 'distance', 'fov', 'lean', 'pace']) {
       motion[property] += (composition[property] - motion[property]) * mix;
     }
-    const time = reduced ? 0 : elapsed * motion.pace;
+    if (!reduced) phase += dt * .001 * motion.pace;
+    const time = reduced ? 0 : phase;
     const idle = !orbit.active && elapsed - interactiveAt > 1.4 && !transitioning && !reduced;
-    const sway = idle ? Math.sin(time * 0.43) * 0.17 : 0;
+    idleWeight += (Number(idle) - idleWeight) * mix;
+    const sway = Math.sin(time * 0.43) * 0.17 * idleWeight;
     const pitch = 0.16 + orbit.state.pitch + pointerY * 0.12;
     can.group.rotation.set(pitch, Math.PI + orbit.state.yaw + sway + pointerX * 0.22 + cameraTarget.swing, motion.lean, 'YXZ');
     can.group.position.set(cameraTarget.yaw * 0.23, Math.sin(time * 1.55) * 0.085, -cameraTarget.travel * 0.18);

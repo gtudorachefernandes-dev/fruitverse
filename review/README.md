@@ -21,3 +21,5 @@ O estúdio carrega os modelos a pedido. Sem WebGL, oferece a seleção por fotog
 Execute `npm ci`, `npm test` e `npm run build` no ambiente Node. Para repetir as capturas, inicie `npm run preview` e execute `node scripts/check-studio.cjs http://localhost:4173 captures` em um ambiente de testes com playwright-core e Chromium disponíveis. A variável CHROME_BIN permite indicar outro executável. A geração das texturas a partir das artes está em scripts/recover-labels.py e usa Pillow e NumPy.
 
 Para licenças das bibliotecas e fontes, consulte LICENCAS.txt e a [licença do GSAP](https://gsap.com/standard-license/).
+
+A revisão baseada no vídeo de referência dispõe as quatro latas em arco no estúdio. O foco pelo teclado ou pelo ponteiro destaca uma embalagem. Ao confirmar, a câmera se aproxima enquanto o pôster escolhido é preparado. Em telas pequenas, o título, a embalagem e a descrição ocupam linhas próprias. Os controles de inspeção ficam entre o palco e o seletor de sabores.

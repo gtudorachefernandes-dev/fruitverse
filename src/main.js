@@ -480,25 +480,42 @@ for (const [index, flavor] of flavors.entries()) {
   button.textContent = flavor.name;
   button.style.setProperty('--swatch', flavor.accent);
   studioChoices.append(button);
+  const focusProduct = () => {
+    if (choosing || !stage3D) return;
+    shot?.kill();
+    shot = gsap.to(stage3D.shot, {focus:index, strength:1, x:(index-1.5)*.50, zoom:1.08,
+      duration:reducedMotion.matches ? 0 : .35, ease:'sine.out', onUpdate:stage3D.draw});
+  };
+  button.addEventListener('focus', focusProduct);
+  button.addEventListener('pointerenter', focusProduct);
   button.addEventListener('click', () => {
     if (choosing) return;
     choosing = true;
-    const finish = () => {
-      studio.close();
-      choices[index].focus({preventScroll:true});
-      hero.scrollIntoView();
-      select(index);
+    const session = studioSession;
+    const ready = select(index);
+    const finish = async () => {
+      await ready;
+      if (session !== studioSession || !studio.open) return;
+      finishTransition();
+      hero.scrollIntoView({behavior:"instant"});
+      const reveal = () => {
+        studio.close();
+        choices[index].focus({preventScroll:true});
+      };
+      if (reducedMotion.matches) reveal();
+      else shot = gsap.to(studio, {opacity:0, duration:.24, ease:'sine.inOut', onComplete:reveal});
     };
     if (reducedMotion.matches) return finish();
     shot?.kill();
     shot = stage3D
-      ? gsap.to(stage3D.shot, {x:(index-1.5)*1.75, zoom:1.55, duration:.74, ease:'power2.inOut', onUpdate:stage3D.draw, onComplete:finish})
+      ? gsap.to(stage3D.shot, {x:(index-1.5)*1.75, focus:index, strength:1, zoom:1.42, duration:.85, ease:'power2.inOut', onUpdate:stage3D.draw, onComplete:finish})
       : gsap.to(image, {scale:1.24, rotationY:9, duration:.48, onComplete:finish});
   });
 }
 document.querySelector('.open-studio').addEventListener('click', async () => {
   const session = ++studioSession;
   choosing = false;
+  gsap.set(studio, {clearProps:"opacity"});
   studio.showModal();
   const config = requestRenderer();
   if (!config) return;

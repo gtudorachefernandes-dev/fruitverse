@@ -10,7 +10,7 @@ export function createStudio(THREE, config, floor, flavors, prints) {
   const cans = flavors.map(({id}, i) => {
     const can = createCan(THREE, config.lite);
     can.setPrint(prints[id]);
-    can.group.position.set((i - 1.5) * 1.75, i % 2 ? -.12 : .12, i % 2 ? .28 : -.28);
+    can.group.position.set((i - 1.5) * 1.75, -.06 * Math.abs(i - 1.5), .6 - .54 * (i - 1.5) ** 2);
     can.group.rotation.set(.07, Math.PI, (1.5-i)*.05);
     can.group.scale.set(.88, 1, .88);
     scene.add(can.group);
@@ -22,15 +22,26 @@ export function createStudio(THREE, config, floor, flavors, prints) {
     light.position.set(x,y,z);
     scene.add(light);
   }
-  const shot = {x:0, zoom:1};
+  const shot = {x:0, zoom:1, focus:0, strength:0};
+  let width, height;
   function draw() {
     const w = floor.clientWidth, h = floor.clientHeight;
     if (!h || !w) return;
-    if (camera.aspect !== w/h || !canvas.width) renderer.setSize(w,h,false);
+    if (width !== w || height !== h) {
+      renderer.setSize(w,h,false);
+      width = w; height = h;
+    }
     camera.aspect = w/h;
     camera.updateProjectionMatrix();
-    const distance = Math.max(8.3, 14 / camera.aspect) / shot.zoom;
-    camera.position.set(shot.x*.86, .55, distance);
+    cans.forEach(({group}, index) => {
+      const weight = Math.exp(-2 * (index - shot.focus) ** 2) * shot.strength;
+      group.rotation.y = Math.PI + (index - 1.5) * .21 * (1 - weight);
+      group.rotation.z = (1.5 - index) * .09 * (1 - weight);
+      group.position.y = -.08 + weight * .19;
+      group.children[0].material.color.setScalar(1 - .48 * (shot.strength - weight));
+    });
+    const distance = Math.max(8, Math.max(9.2, 15 / camera.aspect) / shot.zoom);
+    camera.position.set(shot.x * .74, .68 + .22 * shot.strength, distance);
     camera.lookAt(shot.x, 0, 0);
     renderer.render(scene,camera);
   }
