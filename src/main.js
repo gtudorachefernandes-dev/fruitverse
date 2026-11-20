@@ -5,6 +5,8 @@ import './cinematic.css';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { flavors, nextIndex } from './flavors.js';
+import { requestRenderer, loadRenderer } from './3d/context.js';
+import { createFlavorFlow } from './flavor-flow.js';
 import { scenes } from './scenes.js';
 import { createArtwork, decodeArtwork } from './artwork.js';
 
@@ -19,6 +21,8 @@ const lightBeam = studioLight.querySelector('i');
 const atmosphere = document.querySelector('.atmosphere');
 const modelView = document.querySelector('#model-view');
 const modelToggle = document.querySelector('.view-toggle');
+const modelTools = document.querySelector('.model-tools');
+const modelMode = document.querySelector('.model-mode');
 const modelStatus = document.querySelector('#model-announcement');
 const posterPlanes = [...document.querySelectorAll('.scenery i')];
 const heroMeta = document.querySelector('.hero-meta');
@@ -29,13 +33,9 @@ const loader = document.querySelector('.loader');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const desktopPointer = matchMedia('(min-width: 761px) and (pointer: fine)');
 const saveData = navigator.connection?.saveData;
-const lowPower = saveData || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
 const useLayers = () => desktopPointer.matches && !reducedMotion.matches && !saveData;
-const canOfferWebGL = () => useLayers() && !lowPower;
 let activeArt = frame.querySelector('.artwork');
-let selected = 0;
-let requested = 0;
-let requestId = 0;
+const flavorFlow = createFlavorFlow();
 let transition;
 let intro;
 let scene;
@@ -88,7 +88,7 @@ const cards = flavors.map((flavor, index) => {
 
 function render(index, announce = false) {
   const flavor = flavors[index];
-  selected = index;
+  flavorFlow.commit(index);
   hero.dataset.flavor = flavor.id;
   hero.style.setProperty('--accent', flavor.accent);
   hero.style.setProperty('--glow', flavor.glow);
@@ -116,10 +116,9 @@ function mountArtwork(artwork) {
 }
 
 async function select(index) {
-  requested = index;
-  const id = ++requestId;
+  const token = flavorFlow.request(index);
   finishTransition();
-  if (selected === index) return;
+  if (flavorFlow.selected === index) return;
   const flavor = flavors[index];
   let artwork = createArtwork(flavor, useLayers());
   try {
@@ -129,14 +128,14 @@ async function select(index) {
     try {
       await decodeArtwork(artwork);
     } catch {
-      if (id === requestId) {
-        requested = selected;
+      if (flavorFlow.isCurrent(token)) {
+        flavorFlow.reject();
         document.querySelector('#flavor-announcement').textContent = `Não foi possível carregar ${flavor.name}. Tente novamente.`;
       }
       return;
     }
   }
-  if (id !== requestId) return;
+  if (!flavorFlow.isCurrent(token)) return;
 
   intro?.progress(1);
   finishTransition();
@@ -151,10 +150,16 @@ async function select(index) {
 
   const outgoing = activeArt;
   const incomingCan = artwork.querySelector('.can');
-  const leaving = scenes[flavors[selected].id];
+  const leaving = scenes[flavors[flavorFlow.selected].id];
   const entering = scenes[flavor.id];
   const amplitude = desktopPointer.matches ? 1 : 0.55;
-  transition = gsap.timeline({ defaults: { ease: 'power2.inOut' } });
+  hero.dataset.transition = 'leaving';
+  const transitioningScene = scene;
+  transitioningScene?.setTransitioning(true);
+  transition = gsap.timeline({ onComplete() {
+    delete hero.dataset.transition;
+    transitioningScene?.setTransitioning(false);
+  }, defaults: { ease: 'power2.inOut' } });
   transition
     .to(words, { yPercent: -106, stagger: 0.025, duration: 0.25 }, 0)
     .to(heroMeta, { opacity: 0, y: -12, duration: 0.23 }, 0)
@@ -163,7 +168,7 @@ async function select(index) {
       x: -leaving.x * amplitude, y: -leaving.y * amplitude, z: leaving.depth, duration: 0.33,
     }, 0)
     .to(atmosphere, { opacity: 0, duration: 0.32 }, 0)
-    .call(swap, [], 0.33)
+    .call(() => { hero.dataset.transition = 'arriving'; swap(); }, [], 0.33)
     .to(atmosphere, { opacity: 1, duration: 0.46, clearProps: 'opacity' }, 0.33)
     .fromTo(posterPlanes, { x: (i) => entering.x * (i + 1) * -0.23, y: entering.y * 0.36, scale: 1.08 }, {
       x: 0, y: 0, scale: 1, duration: 0.72, stagger: 0.035, clearProps: 'transform', immediateRender: false,
@@ -195,21 +200,21 @@ async function select(index) {
   }
   if (scene) {
     transition
-      .to(scene.cameraTarget, { travel: 1.2, yaw: -0.79, swing: -0.55, duration: 0.34 }, 0)
+      .to(scene.cameraTarget, { travel: 1.05, yaw: -leaving.yaw * 0.021, swing: -leaving.turn * 0.045, duration: 0.34 }, 0)
       .to(modelView, { opacity: 0, duration: 0.31 }, 0)
       .to(modelView, { opacity: 1, duration: 0.36, clearProps: 'opacity' }, 0.34)
-      .set(scene.cameraTarget, { swing: 0.6 }, 0.34)
+      .set(scene.cameraTarget, { swing: entering.yaw * 0.018 }, 0.34)
       .to(scene.cameraTarget, { travel: -0.16, yaw: 0.13, swing: 0, duration: 0.51, ease: 'power3.out' }, 0.34)
       .to(scene.cameraTarget, { travel: 0, yaw: 0, duration: 0.26, ease: 'sine.out' }, 0.85);
   }
 }
 
 render(0);
-document.querySelector('.next-flavor').addEventListener('click', () => select(nextIndex(requested)));
+document.querySelector('.next-flavor').addEventListener('click', () => select(nextIndex(flavorFlow.requested)));
 
 async function start() {
   await Promise.race([decodeArtwork(activeArt).catch(() => {}), new Promise((resolve) => setTimeout(resolve, 1200))]);
-  if (reducedMotion.matches || requestId) loader.remove();
+  if (reducedMotion.matches || !flavorFlow.pristine) loader.remove();
   else {
     intro = gsap.timeline({ onComplete: () => loader.remove() })
       .to(loader, { yPercent: -105, duration: 0.64, ease: 'power3.inOut' })
@@ -220,11 +225,11 @@ async function start() {
       }, '<');
   }
 
-  if (!useLayers() || requestId) return;
+  if (!useLayers() || !flavorFlow.pristine) return;
   const artwork = createArtwork(flavors[0], true);
   try {
     await decodeArtwork(artwork);
-    if (!requestId && useLayers()) mountArtwork(artwork).remove();
+    if (flavorFlow.pristine && useLayers()) mountArtwork(artwork).remove();
   } catch {
     // Retain the original composite if an optional layer fails to decode.
   }
@@ -244,6 +249,10 @@ media.add('(prefers-reduced-motion: no-preference)', () => {
       scrollTrigger: { trigger: card, start: 'top 90%', once: true },
     });
   }
+  gsap.from('.exploration-visual img', {
+    yPercent: 12, scale: 0.96, duration: 0.95, ease: 'power2.out', clearProps: 'transform',
+    scrollTrigger: { trigger: '.exploration', start: 'top 85%', once: true },
+  });
   gsap.timeline({ scrollTrigger: { trigger: '.manifesto', start: 'top 86%', once: true } })
     .from('.manifesto-label', { opacity: 0, x: -14, duration: 0.4, clearProps: 'opacity,transform' })
     .from('.manifesto h2', { opacity: 0, y: 28, duration: 0.6, ease: 'power3.out', clearProps: 'opacity,transform' }, 0.12)
@@ -321,16 +330,17 @@ function resetPointer() {
 function closeModel(message = '') {
   sceneRequest++;
   modelLoading = false;
-  const restoreFocus = modelView.contains(document.activeElement);
+  const restoreFocus = modelView.contains(document.activeElement) || modelTools.contains(document.activeElement);
   scene?.dispose();
   scene = undefined;
   frame.classList.remove('show-model');
   modelView.hidden = true;
+  modelTools.hidden = true;
   modelToggle.disabled = false;
   modelToggle.setAttribute('aria-pressed', 'false');
   modelToggle.textContent = 'Explorar em 3D';
   modelStatus.textContent = message;
-  if (restoreFocus) (modelToggle.hidden ? choices[selected] : modelToggle).focus({ preventScroll: true });
+  if (restoreFocus) (modelToggle.hidden ? choices[flavorFlow.selected] : modelToggle).focus({ preventScroll: true });
 }
 
 async function openModel() {
@@ -339,24 +349,29 @@ async function openModel() {
   modelToggle.disabled = true;
   modelStatus.textContent = 'Carregando a embalagem 3D.';
   try {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('webgl2', { alpha: true, antialias: true, powerPreference: 'low-power' });
-    if (!context) {
-      closeModel('WebGL 2 indisponível. A perspectiva cinematográfica continua ativa.');
+    const renderer = requestRenderer();
+    if (!renderer) {
+      closeModel('WebGL indisponível. A perspectiva cinematográfica continua ativa.');
       return;
     }
-    const [{ createScene }] = await Promise.all([import('./scene.js'), document.fonts.ready]);
-    if (request !== sceneRequest || !canOfferWebGL()) return;
+    const [{ createScene }, THREE] = await Promise.all([import('./scene.js'), loadRenderer(renderer.lite), document.fonts.ready]);
+    if (request !== sceneRequest) {
+      renderer.context.getExtension('WEBGL_lose_context')?.loseContext();
+      return;
+    }
     finishTransition();
     modelView.hidden = false;
-    scene = createScene(modelView, context, flavors[selected], () => {
+    scene = createScene(THREE, modelView, renderer, flavors[flavorFlow.selected], () => {
       closeModel('A sessão WebGL foi interrompida. A perspectiva cinematográfica foi restaurada.');
     });
     if (!scene) {
       closeModel('A visualização 3D está indisponível neste dispositivo.');
       return;
     }
+    scene.setReduced(reducedMotion.matches);
     scene.setScroll(pageMotion.scroll);
+    modelTools.hidden = false;
+    modelMode.textContent = scene.mode;
     frame.classList.add('show-model');
     modelToggle.setAttribute('aria-pressed', 'true');
     modelToggle.textContent = 'Ver arte original';
@@ -376,27 +391,39 @@ modelToggle.addEventListener('click', () => scene ? closeModel() : openModel());
 
 let dragStart;
 modelView.addEventListener('pointerdown', (event) => {
-  if (event.button !== 0) return;
-  dragStart = event.clientX;
+  if (event.button !== 0 || !event.isPrimary || hero.dataset.transition) return;
+  dragStart = { x: event.clientX, y: event.clientY, time: event.timeStamp };
+  scene?.beginDrag();
   modelView.setPointerCapture(event.pointerId);
 });
 modelView.addEventListener('pointermove', (event) => {
   if (dragStart === undefined || !modelView.hasPointerCapture(event.pointerId)) return;
-  scene?.orbit((event.clientX - dragStart) * 0.014);
-  dragStart = event.clientX;
+  scene?.orbit((event.clientX - dragStart.x) * 0.014, (event.clientY - dragStart.y) * 0.011, event.timeStamp - dragStart.time);
+  dragStart = { x: event.clientX, y: event.clientY, time: event.timeStamp };
 });
-modelView.addEventListener('lostpointercapture', () => { dragStart = undefined; });
+modelView.addEventListener('lostpointercapture', () => { dragStart = undefined; scene?.endDrag(); });
+document.querySelector('.reset-model').addEventListener('click', () => scene?.reset());
+document.querySelector('.explore-launch').addEventListener('click', () => {
+  hero.scrollIntoView();
+  if (scene) modelView.focus({ preventScroll: true });
+  else if (!modelLoading) openModel();
+});
 modelView.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeModel();
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+  const directions = { ArrowLeft: [-0.35, 0], ArrowRight: [0.35, 0], ArrowUp: [0, -0.24], ArrowDown: [0, 0.24] };
+  if (Object.hasOwn(directions, event.key)) {
     event.preventDefault();
-    scene?.orbit(event.key === 'ArrowLeft' ? -0.35 : 0.35);
+    scene?.orbit(...directions[event.key]);
+  }
+  if (event.key === 'Home') {
+    event.preventDefault();
+    scene?.reset();
   }
 });
 
 function syncEffects() {
-  modelToggle.hidden = !canOfferWebGL();
-  if (!canOfferWebGL() && (scene || modelLoading)) closeModel();
+  modelToggle.hidden = false;
+  scene?.setReduced(reducedMotion.matches);
   if (reducedMotion.matches) {
     intro?.progress(1);
     finishTransition();

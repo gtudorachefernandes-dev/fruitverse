@@ -44,10 +44,14 @@
                 <div class="artwork">
                   <img id="packshot" class="can" src="/flavors/strawberry.webp" alt="Lata de Strawberry Rush com morangos" width="922" height="1152" fetchpriority="high">
                 </div>
-                <div id="model-view" class="model-view" role="group" aria-label="Embalagem tridimensional. Arraste ou use as setas para girar." tabindex="-1" hidden></div>
+                <div id="model-view" class="model-view" role="group" aria-label="Embalagem tridimensional. Arraste em qualquer direção ou use as setas para girar. Home centraliza e Escape fecha." tabindex="-1" hidden></div>
               </div>
             </div>
           </div>
+        </div>
+        <div class="model-tools" hidden>
+          <span class="model-mode"></span>
+          <button type="button" class="reset-model">Centralizar</button>
         </div>
         <span class="visual-note" aria-hidden="true">FRUIT SODA &nbsp; / &nbsp; 330 ML</span>
       </div>
@@ -59,6 +63,17 @@
       <p id="model-announcement" class="sr-only" role="status"></p>
       <p id="flavor-announcement" class="sr-only" role="status"></p>
     </section>
+    <section class="exploration" id="explorar" aria-labelledby="exploration-title">
+      <figure class="exploration-visual">
+        <img src="/flavors/layers/strawberry-base.webp" width="922" height="1152" loading="lazy" decoding="async" alt="Detalhe da lata Strawberry Rush, com acabamento vermelho metálico">
+      </figure>
+      <div class="exploration-copy">
+        <p class="section-label">A EMBALAGEM DE PERTO</p>
+        <h2 id="exploration-title">TODOS OS<br>ÂNGULOS.</h2>
+        <p>Gire a lata para explorar o rótulo e ver a tampa, o lacre e o acabamento metálico.</p>
+        <button type="button" class="explore-launch">Girar a lata <span aria-hidden="true">↗</span></button>
+      </div>
+    </section>
     <section id="colecao" class="collection" aria-labelledby="collection-title">
       <div class="collection-heading">
         <p class="section-label">A COLEÇÃO</p>
@@ -68,7 +83,7 @@
     </section>
     <section class="taste-guide" aria-labelledby="taste-title">
       <div>
-        <p class="section-label">GUIA DE SABOR</p>
+        <p class="section-label">POR TRÁS DO SABOR</p>
         <h2 id="taste-title">QUAL É A SUA?</h2>
       </div>
       <dl id="taste-list"></dl>
@@ -80,6 +95,16 @@
         <p>A Fruitverse explora o sabor por inteiro, da primeira impressão ao último gole. Cada bebida nasce da personalidade de uma fruta e ganha seu próprio universo de cor, textura e frescor.</p>
         <a href="#sabores">Voltar aos sabores <svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 13V3M4 7l4-4 4 4"/></svg></a>
       </div>
+    </section>
+    <section class="finale" aria-labelledby="finale-title">
+      <div class="finale-products" aria-hidden="true">
+        <img src="/flavors/layers/strawberry-base.webp" width="922" height="1152" loading="lazy" alt="">
+        <img src="/flavors/layers/mango-base.webp" width="922" height="1152" loading="lazy" alt="">
+        <img src="/flavors/layers/blueberry-base.webp" width="922" height="1152" loading="lazy" alt="">
+        <img src="/flavors/layers/lime-base.webp" width="922" height="1152" loading="lazy" alt="">
+      </div>
+      <h2 id="finale-title">ESCOLHA SEU UNIVERSO.</h2>
+      <a href="#sabores">Voltar a explorar <span aria-hidden="true">↗</span></a>
     </section>
   </main>
   <footer class="footer">
